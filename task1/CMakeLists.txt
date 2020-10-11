@@ -5,10 +5,10 @@ project(task1)
 set(CMAKE_CXX_STANDART 17)
 add_definitions(-Wall)
 
-add_subdirectory(lib)
+include_directories("libs/process/include/")
 
 add_executable(${PROJECT_NAME} src/main.cpp)
 
-include_directories("/lib/process/include")
+add_subdirectory(libs)
 
 target_link_libraries(${PROJECT_NAME} process)

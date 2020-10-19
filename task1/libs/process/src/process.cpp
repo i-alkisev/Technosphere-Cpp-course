@@ -4,6 +4,7 @@
 #include <fcntl.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <iostream>
 
 namespace proc{
     Process::Process(const std::string& path, const std::vector<char *>& argv){
@@ -38,6 +39,7 @@ namespace proc{
                     ::exit(1);
                 }
                 ::execvp(path.data(), argv.data());
+                std::cerr << "exec error" << std::endl;
                 ::exit(1);
                 break;
             }

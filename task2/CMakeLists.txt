@@ -5,8 +5,6 @@ project(task2)
 set(CMAKE_CXX_STANDART 17)
 add_definitions(-Wall)
 
-include_directories("libs/LoggerLib/include/")
-
 add_executable(${PROJECT_NAME} src/main.cpp)
 
 add_subdirectory(libs)

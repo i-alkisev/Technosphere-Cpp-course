@@ -14,7 +14,7 @@ namespace proc{
         }
         int p_out[2];
         if (::pipe(p_out) == -1){
-            close_pipe(p_out);
+            close_pipe(p_in);
             throw std::runtime_error("pipe-out creation error");
         }
         int tmp_pipe[2];
@@ -54,12 +54,13 @@ namespace proc{
                 int size = ::read(tmp_pipe[0], &tmp, 1);
                 ::close(tmp_pipe[0]);
                 int status;
-                if (::waitpid(pid_, &status, WNOHANG) == -1){
+                pid_t tmp_pid = ::waitpid(pid_, &status, WNOHANG);
+                if ((tmp_pid == -1) || (tmp_pid == pid_ && WEXITSTATUS(status))){
                     ::close(fd_in_);
                     fd_in_ = -1;
                     ::close(fd_out_);
                     fd_out_ = -1;
-                    throw std::runtime_error{"exec error"};
+                    throw std::runtime_error{"Process failed"};
                 }
                 break;
             }
@@ -74,6 +75,7 @@ namespace proc{
         if (fd_in_ == -1){
             throw std::runtime_error("attempt to write on a closed descriptor");
         }
+        signal(SIGPIPE, SIG_IGN);
         ssize_t n = ::write(fd_in_, data, len);
         if (n == -1){
             throw std::runtime_error{"write error"};
@@ -107,18 +109,12 @@ namespace proc{
             throw std::runtime_error("attempt to read on a closed descriptor");
         }
         size_t n = 0, count_bytes;
-        int status;
         while (n < len){
             count_bytes = read(static_cast<char *>(data) + n, len - n);
             n += count_bytes;
-            if (!count_bytes && (::waitpid(pid_, &status, WNOHANG) == pid_)){
-                pid_ = 0;
+            if (!count_bytes){
                 ::close(fd_out_);
                 fd_out_ = -1;
-                if (fd_in_ != -1){
-                    ::close(fd_in_);
-                    fd_in_ = -1;
-                }
                 throw std::runtime_error{"the process did not issue the required number of bytes"};
             }
         }

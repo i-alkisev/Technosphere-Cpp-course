@@ -4,7 +4,7 @@
 
 namespace log
 {
-    std::map<Level, std::string> log_heading = {{Level::DEBUG, "DEBUG: "},
+    static std::map<Level, std::string> log_heading = {{Level::DEBUG, "DEBUG: "},
                                                 {Level::INFO, "INFO: "},
                                                 {Level::WARNING, "WARNING: "},
                                                 {Level::ERROR, "ERROR: "}};
@@ -13,24 +13,24 @@ namespace log
 
     void BaseLogger::log(const std::string & msg, Level level){
         if (level >= level_){
-            print(msg);
+            print(log_heading[level] + msg);
         }
     }
 
     void BaseLogger::debug(const std::string & msg){
-        log(log_heading[Level::DEBUG] + msg, Level::DEBUG);
+        log(msg, Level::DEBUG);
     }
     
     void BaseLogger::info(const std::string & msg){
-        log(log_heading[Level::INFO] + msg, Level::INFO);
+        log(msg, Level::INFO);
     }
 
     void BaseLogger::warn(const std::string & msg){
-        log(log_heading[Level::WARNING] + msg, Level::WARNING);
+        log(msg, Level::WARNING);
     }
 
     void BaseLogger::error(const std::string & msg){
-        log(log_heading[Level::ERROR] + msg, Level::ERROR);
+        log(msg, Level::ERROR);
     }
 
     void BaseLogger::set_level(const Level level){
@@ -42,8 +42,6 @@ namespace log
     }
 
     void BaseLogger::print(const std::string & msg){}
-    
-    void BaseLogger::flush(){}
 
     void StdoutLogger::print(const std::string & msg){
         std::cout << msg << std::endl;
@@ -83,8 +81,6 @@ namespace log
         file_ << std::flush;
     }
 
-    FileLogger::FileLogger(const FileLogger & filelogger){};
-
     Logger & Logger::get_instance(){
         static Logger logger;
         return logger;
@@ -94,8 +90,8 @@ namespace log
         global_logger_ = std::move(global_logger);
     }
 
-    const std::unique_ptr<BaseLogger> & Logger::get_global_logger() const{
-        return global_logger_;
+    BaseLogger & Logger::get_global_logger() const{
+        return *global_logger_;
     }
 
     Logger::Logger(){
@@ -118,23 +114,23 @@ namespace log
     }
 
     void set_logger_level(Level lvl){
-        Logger::get_instance().get_global_logger()->set_level(lvl);
+        Logger::get_instance().get_global_logger().set_level(lvl);
     }
 
     void debug(const std::string & msg){
-        Logger::get_instance().get_global_logger()->debug(msg);
+        Logger::get_instance().get_global_logger().debug(msg);
     }
 
     void info(const std::string & msg){
-        Logger::get_instance().get_global_logger()->info(msg);
+        Logger::get_instance().get_global_logger().info(msg);
     }
     
     void warn(const std::string & msg){
-        Logger::get_instance().get_global_logger()->warn(msg);
+        Logger::get_instance().get_global_logger().warn(msg);
     }
     
     void error(const std::string & msg){
-        Logger::get_instance().get_global_logger()->error(msg);
+        Logger::get_instance().get_global_logger().error(msg);
     }
     
 }

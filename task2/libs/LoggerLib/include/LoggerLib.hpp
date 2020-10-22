@@ -47,19 +47,19 @@ namespace log
         void print(const std::string & msg);
         void flush();
     private:
-        FileLogger(const FileLogger & filelogger);
+        FileLogger(const FileLogger & filelogger) = delete;
         std::ofstream file_;
     };
 
     struct Logger
     {
         static Logger & get_instance();
-        const std::unique_ptr<BaseLogger> & get_global_logger() const;
+        BaseLogger & get_global_logger() const;
         void set_global_logger(std::unique_ptr<BaseLogger> global_logger);
     private:
         Logger();
-        Logger(const Logger & logger);
-        Logger & operator=(const Logger & logger);
+        Logger(const Logger & logger) = delete;
+        Logger & operator=(const Logger & logger) = delete;
         std::unique_ptr<BaseLogger> global_logger_;
     };
 

@@ -6,12 +6,21 @@ namespace tcp{
 
     Descriptor::Descriptor(int fd) : fd_(fd){}
 
-    Descriptor::Descriptor(Descriptor && dscr){
-        fd_ = dscr.get_fd();
-        dscr.set_fd(-1);
+    Descriptor & Descriptor::operator=(Descriptor && ds){
+        int tmp = fd_;
+        fd_ = ds.fd_;
+        ds.fd_ = tmp;
+        return *this;
+    }
+
+    Descriptor::Descriptor(Descriptor && ds){
+        int tmp = fd_;
+        fd_ = ds.fd_;
+        ds.fd_ = tmp;
     }
 
     void Descriptor::set_fd(int fd){
+        if((fd_ != -1) && (fd_ != fd)){close();}
         fd_ = fd;
     }
 
@@ -21,6 +30,10 @@ namespace tcp{
         if(fd_ != -1){
             ::close(fd_);
         }
+    }
+
+    Descriptor::operator bool() const{
+        return fd_ == -1 ? false : true;
     }
     
     Descriptor::~Descriptor(){close();}

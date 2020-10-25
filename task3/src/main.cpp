@@ -4,6 +4,7 @@
 
 #include "Connection.hpp"
 #include "Server.hpp"
+#include "tcp_except.hpp"
 
 #define TIMEOUT 10000
 #define BUF_SIZE 1024
@@ -27,7 +28,7 @@ void test_connection_functions(tcp::Connection & connection, Mode mode){
             std::cout << "How many bytes to read" << std::endl;
             std::cin >> count_bytes;
             connection.readExact(buf1.data(), count_bytes);
-            std::cout << buf1 << std::endl;
+            std::cout << buf1.substr(0, count_bytes) << std::endl;
         }while(count_bytes);
         break;
     case Mode::WRITE:
@@ -42,6 +43,7 @@ void test_connection_functions(tcp::Connection & connection, Mode mode){
             std::getline(std::cin, buf2);
             buf2.push_back('\n');
             connection.writeExact(buf2.data(), buf2.length());
+            std::cout << "gg\n";
         }while(buf2 != "\n");
         break;
     default:
@@ -59,7 +61,7 @@ int test_server(std::string addr, int port, Mode mode){
         server.close();
         return 0;
     }
-    catch(std::runtime_error & e){
+    catch(std::exception & e){
         std::cout << e.what() << std::endl;
         return 1;
     }
@@ -73,7 +75,7 @@ int test_client(std::string addr, int port, Mode mode){
         connection.close();
         return 0;
     }
-    catch(std::runtime_error & e){
+    catch(tcp::errno_except & e){
         std::cout << e.what() << std::endl;
         return 1;
     }

@@ -131,6 +131,7 @@ namespace proc{
         if (pid_){
             ::kill(pid_, SIGINT);
             ::waitpid(pid_, nullptr, 0);
+            pid_ = 0;
         }
         if (fd_in_ != -1){
             ::close(fd_in_);

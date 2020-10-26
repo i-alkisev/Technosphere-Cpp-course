@@ -2,7 +2,7 @@
 #include <string>
 #include <stdexcept>
 
-#include <LoggerLib.hpp>
+#include "LoggerLib.hpp"
 
 int test_StdoutLogger(log::Level level){
     log::StdoutLogger logger;
@@ -74,7 +74,6 @@ int test_Logger_file(const std::string &path, log::Level level){
         std::cerr << e.what() << std::endl;
         return 1;
     }
-    return 0;
 }
 
 int main(int argc, char **argv){

@@ -1,10 +1,11 @@
 #include <iostream>
 #include <stdexcept>
-#include <LoggerLib.hpp>
+#include "LoggerLib.hpp"
+#include <map>
 
 namespace log
 {
-    static std::map<Level, std::string> log_heading = {{Level::DEBUG, "DEBUG: "},
+    const std::map<Level, std::string> log_heading = {{Level::DEBUG, "DEBUG: "},
                                                 {Level::INFO, "INFO: "},
                                                 {Level::WARNING, "WARNING: "},
                                                 {Level::ERROR, "ERROR: "}};
@@ -13,7 +14,7 @@ namespace log
 
     void BaseLogger::log(const std::string & msg, Level level){
         if (level >= level_){
-            print(log_heading[level] + msg);
+            print(log_heading.at(level) + msg);
         }
     }
 
@@ -87,6 +88,9 @@ namespace log
     }
 
     void Logger::set_global_logger(std::unique_ptr<BaseLogger> global_logger){
+        if(global_logger == nullptr){
+            throw std::runtime_error("setting a NULL pointer to BaseLogger");
+        }
         global_logger_ = std::move(global_logger);
     }
 

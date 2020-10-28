@@ -22,8 +22,8 @@ namespace tcp{
 
     void Server::open(const std::string & addr, uint16_t port, int max_connection){
         Descriptor result(::socket(AF_INET, SOCK_STREAM, 0));
-        if(!static_cast<bool>(result)){
-            throw errno_except(errno, "socket() error");
+        if(!result){
+            throw errnoExcept(errno, "socket() error");
         }
         int opt = 1;
         if(::setsockopt(result.get_fd(),
@@ -31,21 +31,21 @@ namespace tcp{
                       SO_REUSEADDR,
                       &opt,
                       sizeof(opt)) < 0){
-            throw errno_except(errno, "set SO_REUSEADDR error");
+            throw errnoExcept(errno, "set SO_REUSEADDR error");
         }
         sockaddr_in sock_addr{};
         sock_addr.sin_family = AF_INET;
         sock_addr.sin_port = ::htons(port);
         if((::inet_aton(addr.data(), &sock_addr.sin_addr) == 0)){
-            throw errno_except(errno, "inet_aton() error");
+            throw errnoExcept(errno, "inet_aton() error");
         }
         if((::bind(result.get_fd(),
                    reinterpret_cast<sockaddr*>(&sock_addr),
                    sizeof(sock_addr))) == -1){
-            throw errno_except(errno, "bind() error");
+            throw errnoExcept(errno, "bind() error");
         }
         if(::listen(result.get_fd(), max_connection)){
-            throw errno_except(errno, "listen() error");
+            throw errnoExcept(errno, "listen() error");
         }
         ds_ = std::move(result);
     }
@@ -63,7 +63,7 @@ namespace tcp{
                                  reinterpret_cast<sockaddr*>(&client_addr),
                                  &addr_size);
         if(client_fd < 0){
-            throw errno_except(errno, "accept() error");
+            throw errnoExcept(errno, "accept() error");
         }
         return Connection(Descriptor(client_fd));
     }
@@ -75,7 +75,7 @@ namespace tcp{
     void Server::set_max_connection(int max_connection){
         check("set_max_connection");
         if(::listen(ds_.get_fd(), max_connection)){
-            throw errno_except(errno, "set max connection error");
+            throw errnoExcept(errno, "set max connection error");
         }
     }
 
@@ -93,7 +93,7 @@ namespace tcp{
                       SO_RCVTIMEO,
                       &timeout,
                       sizeof(timeout)) < 0){
-            throw errno_except(errno, "set timeout error");
+            throw errnoExcept(errno, "set timeout error");
         }
     }
     

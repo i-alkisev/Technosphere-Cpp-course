@@ -43,7 +43,6 @@ void test_connection_functions(tcp::Connection & connection, Mode mode){
             std::getline(std::cin, buf2);
             buf2.push_back('\n');
             connection.writeExact(buf2.data(), buf2.length());
-            std::cout << "gg\n";
         }while(buf2 != "\n");
         break;
     default:
@@ -75,8 +74,8 @@ int test_client(std::string addr, int port, Mode mode){
         connection.close();
         return 0;
     }
-    catch(tcp::errno_except & e){
-        std::cout << e.what() << std::endl;
+    catch(tcp::errnoExcept & e){
+        std::cout << e.get_extended_message() << std::endl;
         return 1;
     }
 }

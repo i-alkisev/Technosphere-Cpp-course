@@ -22,19 +22,19 @@ namespace tcp{
 
     void Connection::Connect(const std::string & addr, uint16_t port){
         Descriptor result(::socket(AF_INET, SOCK_STREAM, 0));
-        if(!static_cast<bool>(result)){
-            throw errno_except(errno, "socket() error");
+        if(!result){
+            throw errnoExcept(errno, "socket() error");
         }
         sockaddr_in sock_addr{};
         sock_addr.sin_family = AF_INET;
         sock_addr.sin_port = ::htons(port);
         if((::inet_aton(addr.data(), &sock_addr.sin_addr) == 0)){
-            throw errno_except(errno, "inet_aton() error");
+            throw errnoExcept(errno, "inet_aton() error");
         }
         if((::connect(result.get_fd(),
                       reinterpret_cast<sockaddr*>(&sock_addr),
                       sizeof(sock_addr))) == -1){
-            throw errno_except(errno, "connection was not established");
+            throw errnoExcept(errno, "connection was not established");
         }
         ds_ = std::move(result);
     }
@@ -52,7 +52,7 @@ namespace tcp{
         check("read");
         ssize_t n = ::read(ds_.get_fd(), data, len);
         if (n == -1){
-            throw errno_except(errno, "read error");
+            throw errnoExcept(errno, "read error");
         }
         return n;
     }
@@ -61,7 +61,7 @@ namespace tcp{
         check("write");
         ssize_t n = ::write(ds_.get_fd(), data, len);
         if (n == -1){
-            throw errno_except(errno, "write error");
+            throw errnoExcept(errno, "write error");
         }
         return n;
     }
@@ -72,11 +72,9 @@ namespace tcp{
         while (n < len){
             signal(SIGPIPE, SIG_IGN);
             count_bytes = write(data + n, len - n);
-            std::cout << count_bytes << std::endl;
             n += count_bytes;
             if (!count_bytes){
-                ds_.close();
-                throw errno_except
+                throw errnoExcept
                 (errno, "could not write the specified number of bytes");
             }
         }
@@ -90,7 +88,7 @@ namespace tcp{
             n += count_bytes;
             if (!count_bytes){
                 ds_.close();
-                throw errno_except
+                throw errnoExcept
                 (errno, "could not read the specified number of bytes");
             }
         }
@@ -110,12 +108,12 @@ namespace tcp{
                          SO_SNDTIMEO,
                          &timeout,
                          sizeof(timeout)) == -1)){
-            throw errno_except(errno, "set timeout error");
+            throw errnoExcept(errno, "set timeout error");
         }
     }
     
     void Connection::check(const std::string & where){
-        if(ds_.get_fd() == -1){
+        if(!ds_){
             throw std::runtime_error("connection not initialized (" + where + ")");
         }
     }

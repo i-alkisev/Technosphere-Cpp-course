@@ -7,11 +7,12 @@
 #include "shAllocator.hpp"
 
 namespace shmem{
-#define ShMap std::map<K,V,std::less<K>,ShAlloc<std::pair<K,V>>>
 
-template<typename K, typename V>
+template<class K, class V>
 class SharedMap
 {
+    using ShMap = std::map<K, V, std::less<K>, ShAlloc<std::pair<const K, V>>>;
+
     char *mmap_;
     ShMap *map_;
     Semaphore *sem_;
@@ -29,40 +30,46 @@ public:
         ShMemState* state = new(mmap_) ShMemState{};
         sem_ = new(mmap_ + sizeof(state)) Semaphore{};
         SemLock sem_lock(*sem_);
-        float header_size = (sizeof(Semaphore) + sizeof(ShMemState) + blocks_count) / static_cast<float>(block_size);
+        float header_size = (sizeof(Semaphore) + sizeof(ShMemState) + blocks_count)
+                            / static_cast<float>(block_size);
         state->block_size = block_size;
-        //state->blocks_count = blocks_count - std::floor(header_size);
         state->blocks_count = blocks_count - std::ceil(header_size);
         state->used_blocks_table = mmap_ + sizeof(ShMemState) + sizeof(Semaphore);
         state->first_block = state->used_blocks_table + state->blocks_count;
         ::memset(state->used_blocks_table, FREE_BLOCK, state->blocks_count);
-        ShAlloc<ShMap> alloc{state};
-        map_ = new(alloc.allocate(8)) ShMap{alloc};
+        ShAlloc<std::pair<const K, V>> alloc{state};
+        map_ = new(alloc.allocate(sizeof(ShMap))) ShMap{alloc};
     }
-    void update(K key, V value){
+
+    void update(const K & key, const V & value){
         SemLock sem_lock(*sem_);
-        if(map_->count(key)) (*map_)[key] = value;
-        else throw std::out_of_range("invalid key");
+        map_->at(key) = value;
     }
-    void insert(K key, V value){
+
+    void insert(const K & key, const V & value){
         SemLock sem_lock(*sem_);
-        (*map_)[key] = value;
+        map_->insert({key, value});
     }
+
     V & get(const K & key){
         SemLock sem_lock(*sem_);
-        if(map_->count(key)) return (*map_)[key];
-        throw std::out_of_range("invalid key");
+        return map_->at(key);
     }
-    void remove(K key){
+
+    void remove(const K & key){
         SemLock sem_lock(*sem_);
         map_->erase(key);
     }
-    ~SharedMap(){
-        sem_->~Semaphore();
+
+    void destroy(){
+        sem_->destroy();
         map_->~map();
+    }
+
+    ~SharedMap(){
         ::munmap(mmap_, shmem_size_);
     }
 };
-}
+} //namespace shmem
 
 #endif

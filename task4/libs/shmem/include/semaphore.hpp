@@ -7,14 +7,14 @@ namespace shmem{
 class Semaphore
 {
     sem_t val_;
-    void destroy();
 public:
     Semaphore();
     void post();
     void wait();
+    void destroy();
     Semaphore(const Semaphore &) = delete;
     Semaphore & operator=(const Semaphore &) = delete;
-    ~Semaphore();
+    ~Semaphore() = default;
 };
 
 class SemLock

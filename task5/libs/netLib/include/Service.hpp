@@ -15,23 +15,22 @@ struct IServiceListener
     virtual void onWriteAvailable(BufferedConnection & buf_connection, const EPoll & epoll) = 0;
     virtual void onReadAvailable (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
     virtual void onError         (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
-    virtual int  onTimeout       () = 0;
 };
 
 class Service
 {
-    std::unique_ptr<IServiceListener> listener_;
+    IServiceListener *listener_;
     std::vector<BufferedConnection> connections_;
     Server server_;
     EPoll epoll_;
-    int find_connection_pos(int fd);
+    unsigned find_connection_pos(int fd);
     void closeConnection(BufferedConnection);
 public:
-    Service(std::unique_ptr<IServiceListener> listener);
-    void setListener(std::unique_ptr<IServiceListener> listener);
+    Service(IServiceListener *listener);
+    void setListener(IServiceListener *listener);
     void open(const std::string & addr, uint16_t port, int max_connection = SOMAXCONN);
     void close();
-    void run(int timeout_ms = 10000, int maxivents = 1024);
+    void run(size_t maxivents, int timeout_ms = 10000);
     Service(const Service &) = delete;
     Service & operator=(const Service &) = delete;
     ~Service() = default;

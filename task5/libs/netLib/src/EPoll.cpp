@@ -11,9 +11,16 @@ EPoll::EPoll(){
     epoll_fd_.set_fd(result);
 }
 
-void EPoll::mod(const Descriptor & ds, int flags) const{
+int EPoll::needed_events(EPollEvents flag) const{
+    if (flag == EPollEvents::RDONLY) return EPOLLIN | EPOLLRDHUP;
+    if (flag == EPollEvents::WRONLY) return EPOLLOUT | EPOLLRDHUP;
+    if (flag == EPollEvents::RDWR) return EPOLLIN | EPOLLOUT | EPOLLRDHUP;
+    return EPOLLRDHUP;
+}
+
+void EPoll::mod(const Descriptor & ds, EPollEvents flag) const{
     ::epoll_event event{};
-    event.events = flags | EPOLLRDHUP;
+    event.events = needed_events(flag);
     event.data.fd = ds.get_fd();
     if(::epoll_ctl(epoll_fd_.get_fd(),
                     EPOLL_CTL_MOD,
@@ -21,9 +28,9 @@ void EPoll::mod(const Descriptor & ds, int flags) const{
         throw ErrnoExcept(errno, "Error modifying epoll");
     }
 }
-void EPoll::add(const Descriptor & ds, int flags) const{
+void EPoll::add(const Descriptor & ds, EPollEvents flag) const{
     ::epoll_event event{};
-    event.events = flags | EPOLLRDHUP;
+    event.events = needed_events(flag);
     event.data.fd = ds.get_fd();
     if(::epoll_ctl(epoll_fd_.get_fd(),
                     EPOLL_CTL_ADD,

@@ -5,14 +5,15 @@ BufferedConnection::BufferedConnection(Connection && connection){
     connection_ = std::move(connection);
 }
 
-void BufferedConnection::subscribe(const EPoll & epoll, int flag) const{
+void BufferedConnection::subscribe(const EPoll & epoll, EPollEvents flag) const{
     epoll.mod(connection_.get_ds(), flag);
 }
 
 void BufferedConnection::read_to_buf(size_t len){
-    read_buf_ = std::string(len + 1, '\0');
-    size_t count_bytes = connection_.read(read_buf_.data(), len);
-    read_buf_.resize(count_bytes);
+    std::string new_data(len, '0');
+    size_t count_bytes = connection_.read(new_data.data(), len);
+    new_data.resize(count_bytes);
+    read_buf_.append(new_data);
 }
 
 void BufferedConnection::write_from_buf(size_t len){
@@ -30,6 +31,10 @@ const std::string & BufferedConnection::get_read_buf(){
 
 std::string & BufferedConnection::get_write_buf(){
     return write_buf_;
+}
+
+void BufferedConnection::clear_read_buf(){
+    read_buf_.clear();
 }
 
 void BufferedConnection::close(){

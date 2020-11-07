@@ -19,6 +19,7 @@ public:
     Server & operator=(const Server &) = delete;
     Connection accept();
     void close();
+    ~Server() = default;
     friend class Service;
 };
 }

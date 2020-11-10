@@ -16,8 +16,7 @@ struct TestServiceListener : net::IServiceListener
         buf_connection.close();
     }
 
-    void onWriteAvailable(net::BufferedConnection & buf_connection, const net::EPoll & epoll) override{
-        buf_connection.write_from_buf(buf_connection.get_write_buf().length());
+    void onWriteDone(net::BufferedConnection & buf_connection, const net::EPoll & epoll) override{
         buf_connection.subscribe(epoll, net::EPollEvents::RDONLY);
     }
 

@@ -1,4 +1,5 @@
 #include "BufferedConnection.hpp"
+#include <algorithm>
 
 namespace net{
 BufferedConnection::BufferedConnection(Connection && connection){
@@ -18,7 +19,8 @@ void BufferedConnection::read_to_buf(size_t len){
 
 void BufferedConnection::write_from_buf(size_t len){
     size_t count_bytes = connection_.write(write_buf_.data(), len);
-    write_buf_ = write_buf_.substr(count_bytes, write_buf_.length());
+    std::rotate(write_buf_.begin(), write_buf_.begin() + count_bytes, write_buf_.end());
+    write_buf_.resize(write_buf_.length() - count_bytes);
 }
 
 void BufferedConnection::write_to_buf(const std::string & str){

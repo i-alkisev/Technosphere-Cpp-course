@@ -1,8 +1,6 @@
 #ifndef SERVICE_HPP
 #define SERVICE_HPP
 
-#include <memory>
-
 #include "BufferedConnection.hpp"
 #include "Server.hpp"
 
@@ -12,7 +10,7 @@ struct IServiceListener
 {
     virtual void onNewConnection (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
     virtual void onClose         (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
-    virtual void onWriteAvailable(BufferedConnection & buf_connection, const EPoll & epoll) = 0;
+    virtual void onWriteDone(BufferedConnection & buf_connection, const EPoll & epoll) = 0;
     virtual void onReadAvailable (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
     virtual void onError         (BufferedConnection & buf_connection, const EPoll & epoll) = 0;
 };

@@ -20,7 +20,7 @@ class SharedMap
 public:
     SharedMap(size_t block_size, size_t blocks_count){
         shmem_size_ = blocks_count * block_size;
-        mmap_ = static_cast<char *>(::mmap(0, shmem_size_,
+        mmap_ = static_cast<char *>(::mmap(nullptr, shmem_size_,
                                           PROT_READ | PROT_WRITE,
                                           MAP_ANONYMOUS | MAP_SHARED,
                                           -1, 0));
@@ -28,37 +28,47 @@ public:
             throw errnoExcept(errno, "mmap_ error");
         }
         ShMemState* state = new(mmap_) ShMemState{};
-        sem_ = new(mmap_ + sizeof(state)) Semaphore{};
+        sem_ = new(mmap_ + sizeof(ShMemState)) Semaphore{};
         SemLock sem_lock(*sem_);
-        float header_size = (sizeof(Semaphore) + sizeof(ShMemState) + blocks_count)
+        float header_size = (sizeof(Semaphore) + sizeof(ShMemState) + blocks_count + sizeof(ShMap))
                             / static_cast<float>(block_size);
         state->block_size = block_size;
-        state->blocks_count = blocks_count - std::ceil(header_size);
-        state->used_blocks_table = mmap_ + sizeof(ShMemState) + sizeof(Semaphore);
+        size_t header_size_in_blocks = std::ceil(header_size / static_cast<float>(block_size));
+        state->blocks_count = blocks_count - header_size_in_blocks;
+        state->used_blocks_table = mmap_ + sizeof(ShMemState) + sizeof(Semaphore) + sizeof(ShMap);
         state->first_block = state->used_blocks_table + state->blocks_count;
         ::memset(state->used_blocks_table, FREE_BLOCK, state->blocks_count);
         ShAlloc<std::pair<const K, V>> alloc{state};
-        map_ = new(alloc.allocate(sizeof(ShMap))) ShMap{alloc};
+        map_ = new(mmap_ + sizeof(ShMemState) + sizeof(Semaphore)) ShMap{alloc};
     }
 
-    void update(const K & key, const V & value){
+    auto get_allocator(){
+        return map_->get_allocator();
+    }
+
+    void update(std::pair<const K, V> pair){
         SemLock sem_lock(*sem_);
-        map_->at(key) = value;
+        map_->at(pair.first) = pair.second;
     }
 
-    void insert(const K & key, const V & value){
+    void insert(std::pair<const K, V> pair){
         SemLock sem_lock(*sem_);
-        map_->insert({key, value});
+        map_->insert(pair);
     }
 
-    V & get(const K & key){
+    V get(K key){
         SemLock sem_lock(*sem_);
         return map_->at(key);
     }
 
-    void remove(const K & key){
+    void remove(K key){
         SemLock sem_lock(*sem_);
         map_->erase(key);
+    }
+
+    size_t size(){
+        SemLock sem_lock(*sem_);
+        return map_->size();
     }
 
     void destroy(){

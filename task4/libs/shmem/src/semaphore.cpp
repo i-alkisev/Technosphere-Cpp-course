@@ -29,6 +29,7 @@ void Semaphore::destroy(){
 SemLock::SemLock(Semaphore & sem) : sem_(sem){
     sem_.wait();
 }
+
 SemLock::~SemLock(){
     sem_.post();
 }

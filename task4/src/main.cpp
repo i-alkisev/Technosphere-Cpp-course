@@ -2,106 +2,63 @@
 #include <shMap.hpp>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <pthread.h>
 
-int test_1(){
+using ShString = std::basic_string<char, std::char_traits<char>, shmem::ShAlloc<char>>;
+
+int test1(){
   try{
-  shmem::SharedMap<std::string, int> shmap(128, 128);
-  shmap.insert("one", 1);
-  int fork1 = ::fork();
-  if(fork1 == 0){
-    std::cout << "ch1 : shmap[1]=" << shmap.get("one") << std::endl;
-    shmap.update("one", 11);
-    std::cout << "ch1 : shmap[1]=" << shmap.get("one") << std::endl;
-    shmap.insert("two", 2);
+    shmem::SharedMap<ShString, ShString> shmap(128, 128);
+    shmem::ShAlloc<char> alloc(shmap.get_allocator().state_);
+    std::cout << "shmap.size()=" << shmap.size() << std::endl;
+    shmap.insert({{"one", alloc}, {"inserted from father, before creating childs", alloc}});
+    pid_t son1 = ::fork();
+    if(son1 < 0) throw std::runtime_error("fork 1 error");
+    if(!son1){
+      shmap.insert({{"two", alloc}, {"inserted from first son", alloc}});
+      ::sleep(2);
+      std::cout << "son1: shmap.get(\"one\")=" << shmap.get({"one", alloc}) << std::endl;
+      std::cout << "son1: shmap.get(\"three\")=" << shmap.get({"three", alloc}) << std::endl;
+      std::cout << std::endl;
+      ::exit(0);
+    }
+    pid_t son2 = ::fork();
+    if(son2 < 0) throw std::runtime_error("fork 2 error");
+    if(!son2){
+      ::sleep(1);
+      shmap.update({{"one", alloc}, {"updated from second son", alloc}});
+      std::cout << "son2: shmap.get(\"one\")=" << shmap.get({"one", alloc}) << std::endl;
+      std::cout << "son2: shmap.get(\"two\")=" << shmap.get({"two", alloc}) << std::endl;
+      std::cout << "son2: shmap.get(\"three\")=" << shmap.get({"three", alloc}) << std::endl;
+      std::cout << std::endl;
+      shmap.insert({{"four", alloc}, {"inserted from second son", alloc}});
+      ::exit(0);
+    }
+    shmap.insert({{"three", alloc}, {"inserted from father, after creating childs", alloc}});
+    ::waitpid(son1, nullptr, 0);
+    ::waitpid(son2, nullptr, 0);
+    std::cout << "shmap.size()=" << shmap.size() << std::endl;
+    std::cout << "father: shmap.get(\"one\")=" << shmap.get({"one", alloc}) << std::endl;
+    std::cout << "father: shmap.get(\"two\")=" << shmap.get({"two", alloc}) << std::endl;
+    std::cout << "father: shmap.get(\"three\")=" << shmap.get({"three", alloc}) << std::endl;
+    std::cout << "father: shmap.get(\"four\")=" << shmap.get({"four", alloc}) << std::endl;
+    shmap.remove({"three", alloc});
+    std::cout << "after shmap.remove(\"three\")\nshmap.size()=" << shmap.size() << std::endl;
+    shmap.destroy();
     return 0;
   }
-  ::waitpid(fork1, nullptr, 0);
-  std::cout << "shmap[1]=" << shmap.get("one") << std::endl;
-  shmap.update("one", 111);
-  std::cout << "shmap[1]=" << shmap.get("one") << std::endl;
-  std::cout << "shmap[2]=" << shmap.get("two") << std::endl;
-  shmap.destroy();
-  return 0;
-  }
   catch(shmem::errnoExcept & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.get_extended_message() << std::endl;
+    std::cout << "Error in test1" << std::endl;
+    std::cout << e.get_extended_message() << std::endl;
     return 1;
   }
   catch(std::exception & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.what() << std::endl;
-    return 1;
-  }
-}
-
-int test_2(){
-  try{
-  shmem::SharedMap<std::string, std::string> shmap(128, 128);
-  shmap.insert("one", "one one one");
-  int fork1 = ::fork();
-  if(fork1 == 0){
-    std::cout << "ch1 : shmap[1]=" << shmap.get("one") << std::endl;
-    shmap.update("one", "one from child");
-    std::cout << "ch1 : shmap[1]=" << shmap.get("one") << std::endl;
-    shmap.insert("two abcdefghigklmnopqrstuvwxyz abcdefghigklmnopqrstuvwxyz", "two from child");
-    return 0;
-  }
-  ::waitpid(fork1, nullptr, 0);
-  std::cout << "shmap[1]=" << shmap.get("one") << std::endl;
-  shmap.update("one", "one from parent one from parent one from parent one from parent");
-  std::cout << "shmap[1]=" << shmap.get("one") << std::endl;
-  std::cout << "shmap[2]=" << shmap.get("two abcdefghigklmnopqrstuvwxyz abcdefghigklmnopqrstuvwxyz") << std::endl;
-  shmap.destroy();
-  return 0;
-  }
-  catch(shmem::errnoExcept & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.get_extended_message() << std::endl;
-    return 1;
-  }
-  catch(std::exception & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.what() << std::endl;
-    return 1;
-  }
-}
-
-int test_3(){
-  try{
-  shmem::SharedMap<int, std::string> shmap(128, 128);
-  shmap.insert(1, "one one one");
-  int fork1 = ::fork();
-  if(fork1 == 0){
-    std::cout << "ch1 : shmap[1]=" << shmap.get(1) << std::endl;
-    shmap.update(1, "one from child");
-    const char *str = (const char *)"two from child two from child two from child two from child";
-    std::cout << "ch1 : shmap[1]=" << shmap.get(1) << std::endl;
-    shmap.insert(2, str);
-    std::cout << "ch1 : shmap[2]=" << shmap.get(2) << std::endl;
-    return 0;
-  }
-  ::waitpid(fork1, nullptr, 0);
-  std::cout << "shmap[1]=" << shmap.get(1) << std::endl;
-  shmap.update(1, "one from parent one from parent one from parent one from parent");
-  std::cout << "shmap[1]=" << shmap.get(1) << std::endl;
-  std::cout << "shmap[2]=" << shmap.get(2) << std::endl;
-  shmap.destroy();
-  return 0;
-  }
-  catch(shmem::errnoExcept & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.get_extended_message() << std::endl;
-    return 1;
-  }
-  catch(std::exception & e){
-    std::cerr << "Error in test_1" << std::endl;
-    std::cerr << e.what() << std::endl;
+    std::cout << "Erro in test1" << std::endl;
+    std::cout << e.what() << std::endl;
     return 1;
   }
 }
 
 int main(){
-  test_3();
-  return 0;
+  return test1();
 }

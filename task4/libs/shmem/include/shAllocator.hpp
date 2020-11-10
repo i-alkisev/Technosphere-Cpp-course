@@ -5,6 +5,8 @@
 #include <cstring>
 #include <sys/mman.h>
 
+#include "semaphore.hpp"
+
 namespace shmem{
 
 constexpr char USED_BLOCK = '1';
@@ -25,6 +27,7 @@ size_t find_free_blocks(size_t blocks_count, const std::string_view& used_table)
 }
 
 struct ShMemState {
+  Semaphore sem;
   size_t blocks_count;
   size_t block_size;
   char* used_blocks_table;
@@ -46,6 +49,7 @@ public:
   }
 
   T* allocate(std::size_t n) {
+    SemLock sem_lock(state_->sem);
     size_t blocks_needed = get_size_in_blocks(sizeof(T) * n, state_->block_size);
     std::string_view table{state_->used_blocks_table, state_->blocks_count};
     size_t blocks_pos = find_free_blocks(blocks_needed, table);
@@ -54,6 +58,7 @@ public:
   }
 
   void deallocate(T* p, std::size_t n) noexcept {
+    SemLock sem_lock(state_->sem);
     size_t offset = (reinterpret_cast<char*>(p) - state_->first_block) / state_->block_size;
     size_t blocks_count = get_size_in_blocks(sizeof(T) * n, state_->block_size);
     ::memset(state_->used_blocks_table + offset, FREE_BLOCK, blocks_count);

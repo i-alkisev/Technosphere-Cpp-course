@@ -52,10 +52,15 @@ BufferedConnection::BufferedConnection(BufferedConnection && buf_connection){
     write_buf_ = std::move(buf_connection.write_buf_);
     connection_ = std::move(buf_connection.connection_);
 }
+
 BufferedConnection & BufferedConnection::operator=(BufferedConnection && buf_connection){
     read_buf_ = std::move(buf_connection.read_buf_);
     write_buf_ = std::move(buf_connection.write_buf_);
     connection_ = std::move(buf_connection.connection_);
     return *this;
+}
+
+bool BufferedConnection::isValid() const{
+    return connection_.isValid();
 }
 }

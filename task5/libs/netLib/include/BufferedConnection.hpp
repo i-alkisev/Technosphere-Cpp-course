@@ -26,6 +26,7 @@ public:
     void clear_read_buf();
     void close();
     bool operator==(int fd);
+    bool isValid() const;
     ~BufferedConnection() = default;
 };
 }

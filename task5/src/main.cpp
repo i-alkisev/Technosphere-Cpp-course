@@ -25,6 +25,11 @@ struct TestServiceListener : net::IServiceListener
         if(msg.back() != '\n') return;
         std::cout << "Client message : \"" << msg.substr(0, msg.length() - 1) << "\"" << std::endl;
         buf_connection.write_to_buf("Your message was: \"" + msg.substr(0, msg.length() - 1) + "\"\n");
+        if(msg == "exit()\n"){
+            buf_connection.close();
+            std::cout << "Clien has been disconnected" << std::endl;
+            return;
+        }
         buf_connection.clear_read_buf();
         buf_connection.subscribe(epoll, net::EPollEvents::WRONLY);
     }

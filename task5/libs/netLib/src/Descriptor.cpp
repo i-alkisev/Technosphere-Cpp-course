@@ -27,6 +27,7 @@ int Descriptor::get_fd() const{return fd_;}
 void Descriptor::close(){
     if(fd_ != -1){
         ::close(fd_);
+        fd_ = -1;
     }
 }
 

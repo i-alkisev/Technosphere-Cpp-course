@@ -31,6 +31,7 @@ public:
     void run(size_t maxivents, int timeout_ms = 10000);
     Service(const Service &) = delete;
     Service & operator=(const Service &) = delete;
+    void checkConnection(unsigned pos);
     ~Service() = default;
 };
 }

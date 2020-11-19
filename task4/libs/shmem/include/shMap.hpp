@@ -42,8 +42,8 @@ public:
         map_ = new(mmap_ + sizeof(ShMemState) + sizeof(Semaphore)) ShMap{alloc};
     }
 
-    auto get_allocator(){
-        return map_->get_allocator();
+    shmem::ShAlloc<char> get_char_allocator(){
+        return ShAlloc<char> {map_->get_allocator().state_};
     }
 
     void update(std::pair<const K, V> pair){

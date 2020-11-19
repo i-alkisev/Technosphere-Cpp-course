@@ -9,7 +9,7 @@ using ShString = std::basic_string<char, std::char_traits<char>, shmem::ShAlloc<
 int test1(){
   try{
     shmem::SharedMap<ShString, ShString> shmap(128, 128);
-    shmem::ShAlloc<char> alloc(shmap.get_allocator().state_);
+    shmem::ShAlloc<char> alloc = shmap.get_char_allocator();
     std::cout << "shmap.size()=" << shmap.size() << std::endl;
     shmap.insert({{"one", alloc}, {"inserted from father, before creating childs", alloc}});
     pid_t son1 = ::fork();

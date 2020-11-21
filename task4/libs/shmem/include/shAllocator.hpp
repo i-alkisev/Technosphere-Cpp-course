@@ -12,6 +12,7 @@ namespace shmem{
 constexpr char USED_BLOCK = '1';
 constexpr char FREE_BLOCK = '0';
 
+namespace{
 size_t get_size_in_blocks(size_t bytes, size_t block_size) {
   float blocks_needed = bytes / static_cast<float>(block_size);
   return std::ceil(blocks_needed);
@@ -25,6 +26,7 @@ size_t find_free_blocks(size_t blocks_count, const std::string_view& used_table)
   }
   return pos;
 }
+} //namespace
 
 struct ShMemState {
   Semaphore sem;

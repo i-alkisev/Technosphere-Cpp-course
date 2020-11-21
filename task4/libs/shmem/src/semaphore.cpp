@@ -9,9 +9,7 @@ Semaphore::Semaphore(){
 }
 
 void Semaphore::post(){
-    if(::sem_post(&val_) < 0){
-        throw errnoExcept(errno, "sem_post error");
-    }
+    ::sem_post(&val_);
 }
 
 void Semaphore::wait(){

@@ -1,0 +1,3 @@
+add_subdirectory(netLib)
+add_subdirectory(httpLib)
+add_subdirectory(descriptor)

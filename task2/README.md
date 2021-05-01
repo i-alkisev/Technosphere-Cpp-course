@@ -5,7 +5,7 @@
 Лог должен обладать 4 уровнями с именами: debug, info, warning, error.
 При выводе сообщения указывается его уровень. Лог выводит только те сообщения, которые выше (приоритетнее) его уровня.
 
-![task](https://github.com/i-alkisev/Technosphere-Cpp-course/tree/main/task2/img/task.png)
+![task](img/task.png)
 
 ## Сборка
 ```
